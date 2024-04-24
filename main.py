@@ -1,6 +1,8 @@
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+from firebase_admin import auth
+
 import os
 import datetime
 import csv
@@ -109,9 +111,20 @@ def reviews_to_dataframe(db):
 def spots_to_dataframe(db):
     # Get the spots collection
     spots = db.collection('spots')
+
+    unfinished_reviews = db.collection('unfinishedReviews')
+
     
     # Get all the documents in the collection
     docs = spots.stream()
+    docs_unfinished = unfinished_reviews.stream()
+
+    unfinished_reviews_data = {}
+
+    for doc in docs_unfinished:
+        review_data = doc.to_dict()
+        unfinished_reviews_data[review_data["spot"]] = review_data["count"]
+
     
     # Create a list to store the data
     data = []
@@ -126,7 +139,8 @@ def spots_to_dataframe(db):
             'latitude': spot_data['location-arr'][0],
             'longitude': spot_data['location-arr'][1],
             'name': spot_data['name'],
-            'price': spot_data['price']
+            'price': spot_data['price'],
+            'unfinished_reviews': unfinished_reviews_data.get(spot_data['name'], 0)
         })
         
         for category_id in spot_data['categories']:
@@ -161,6 +175,38 @@ def dataframe_to_csv(data, folder_path, filename):
     print(f"The CSV {filename} has been created and loaded")
 
 
+def bookmarks_usage_to_dataframe(db):
+    users = get_all_user_ids()
+
+    bookmarks_usage = db.collection('bookmarksUsage')
+
+    docs = bookmarks_usage.stream()
+
+    data = []
+    for doc in docs:
+        bookmarks_data = doc.to_dict()
+        data.append({
+            'user_id': bookmarks_data['userId'],
+            'using': bookmarks_data['usage'],
+        })
+    
+    for user in users:
+        if user not in [d['user_id'] for d in data]:
+            data.append({
+                'user_id': user,
+                'using': False
+            })
+    
+    df = pd.DataFrame(data)
+    return df
+
+def get_all_user_ids():
+    ids = []
+    users = auth.list_users()
+    for user in users.iterate_all():
+        email = user.email
+        ids.append(email.split('@')[0])
+    return ids
 
 # Create main function
 def main(): 
@@ -181,6 +227,9 @@ def main():
     reviews_data, categories_reviews_data = reviews_to_dataframe(db)
     # Get the spots data
     spots_data, categories_spots_data, spots_reviews_data = spots_to_dataframe(db)
+    # Get the bookmarks usage data
+    bookmarks_usage_data = bookmarks_usage_to_dataframe(db)
+
 
     # Create folder file path (results/timestamp of the day)
     #timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -208,6 +257,8 @@ def main():
     dataframe_to_csv(categories_reviews_data, folder_path, "categories_reviews")
     dataframe_to_csv(categories_spots_data, folder_path, "categories_spots")
     dataframe_to_csv(spots_reviews_data, folder_path, "spots_reviews")
+    dataframe_to_csv(bookmarks_usage_data, folder_path, "bookmarks_usage")
+
 
 
 if __name__ == "__main__":

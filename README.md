@@ -1,5 +1,5 @@
 # You can access the Dashboard via this link: 
-- [Analytics Dashboard - Power Bi]([https://uniandes-my.sharepoint.com/:u:/g/personal/a_salgadom_uniandes_edu_co/EYvcU-AwlzZGm6oyni2FUQIB4D4MW6dFdCqBrZ5ZVpZ-iA?e=kgszYS](https://app.powerbi.com/groups/me/reports/45ddc8c5-89c5-4c3a-bc14-0c340582d5b2?ctid=fabd047c-ff48-492a-8bbb-8f98b9fb9cca&pbi_source=linkShare))
+- [Analytics Dashboard - Power Bi](https://uniandes-my.sharepoint.com/:u:/g/personal/a_salgadom_uniandes_edu_co/EeW13WafVhxDmMOumz5706IBFoU5HXZsS0qbAItszUrxUA?e=meyxoj)
 
 ## Instructions
 

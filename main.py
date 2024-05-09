@@ -164,6 +164,35 @@ def spots_to_dataframe(db):
     return spots_df, categories_spots_df, user_reviews_df
 
 
+def search_terms_to_dataframe(db):
+    search_terms_collection = db.collection('searchTerms')
+    
+    docs = search_terms_collection.stream()
+    
+    search_terms_dict = {}
+    
+    for i, doc in enumerate(docs):
+        doc_data = doc.to_dict()
+        for key, value in doc_data.items():
+            # If the key already exists, append the list to the corresponding column
+            if key in search_terms_dict:
+                search_terms_dict[key].append(value)
+            # Otherwise, create a new key with the list
+            else:
+                search_terms_dict[key] = [value] * i + [value]
+    
+    search_terms_df = pd.DataFrame(search_terms_dict)
+    
+    search_terms_df = search_terms_df.map(lambda x: ', '.join(x) if isinstance(x, list) and len(x) > 1 else x)
+    
+    for col in search_terms_df.columns:
+        if search_terms_df[col].apply(lambda x: isinstance(x, list) and len(x) == 1).any():
+            search_terms_df[col] = search_terms_df[col].apply(lambda x: x[0] if isinstance(x, list) else x)
+    
+    return search_terms_df
+
+
+
 # Function to obtain the info of the categories dataframe and turn it into a csv file
 def dataframe_to_csv(data, folder_path, filename):
 
@@ -229,6 +258,8 @@ def main():
     spots_data, categories_spots_data, spots_reviews_data = spots_to_dataframe(db)
     # Get the bookmarks usage data
     bookmarks_usage_data = bookmarks_usage_to_dataframe(db)
+    # Get the search terms data
+    search_terms_data = search_terms_to_dataframe(db)
 
 
     # Create folder file path (results/timestamp of the day)
@@ -258,8 +289,11 @@ def main():
     dataframe_to_csv(categories_spots_data, folder_path, "categories_spots")
     dataframe_to_csv(spots_reviews_data, folder_path, "spots_reviews")
     dataframe_to_csv(bookmarks_usage_data, folder_path, "bookmarks_usage")
+    dataframe_to_csv(search_terms_data, folder_path, "search_terms")
+
 
 
 
 if __name__ == "__main__":
     main()
+

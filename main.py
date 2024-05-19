@@ -191,6 +191,25 @@ def search_terms_to_dataframe(db):
     
     return search_terms_df
 
+def bug_reports_to_dataframe(db):
+    bug_reports_collection = db.collection('bugReports')
+
+    docs = bug_reports_collection.stream()
+
+    bug_reports_data = []
+
+    for doc in docs:
+        bug_report_data = doc.to_dict()
+        bug_reports_data.append({
+            'bugType': bug_report_data['bugType'],
+            'date': bug_report_data['date'],
+            'description': bug_report_data['description'],
+            'severityLevel': bug_report_data['severityLevel'],
+            'stepsToReproduce': bug_report_data['stepsToReproduce'],
+        })
+    
+    bug_reports_df = pd.DataFrame(bug_reports_data)
+    return bug_reports_df
 
 
 # Function to obtain the info of the categories dataframe and turn it into a csv file
@@ -260,7 +279,8 @@ def main():
     bookmarks_usage_data = bookmarks_usage_to_dataframe(db)
     # Get the search terms data
     search_terms_data = search_terms_to_dataframe(db)
-
+    # Get bug reports data 
+    bug_reports_data = bug_reports_to_dataframe(db)
 
     # Create folder file path (results/timestamp of the day)
     #timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -290,6 +310,7 @@ def main():
     dataframe_to_csv(spots_reviews_data, folder_path, "spots_reviews")
     dataframe_to_csv(bookmarks_usage_data, folder_path, "bookmarks_usage")
     dataframe_to_csv(search_terms_data, folder_path, "search_terms")
+    dataframe_to_csv(bug_reports_data, folder_path, "bug_reports")
 
 
 

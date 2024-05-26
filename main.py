@@ -229,6 +229,60 @@ def bookmarks_usage_to_dataframe(db):
     df = pd.DataFrame(data)
     return df
 
+
+def spot_detail_fetch_to_dataframe(db):
+    spot_detail_collection = db.collection('spotDetailFetchingTime')
+    docs = spot_detail_collection.stream()
+
+    data = []
+    for doc in docs:
+        doc_data = doc.to_dict()
+        spot_name = doc_data.get('spot', 'Unknown')  # Default to 'Unknown' if no spot is provided
+        times_list = doc_data.get('times', [])  # Default to an empty list if no times are provided
+
+        for record in times_list:
+            date = record.get('date').strftime('%Y-%m-%d %H:%M:%S')  # Convert timestamp to string if needed
+            platform = record.get('platform', 'Unknown')  # Default to 'Unknown' if no platform is provided
+            time_taken = record.get('time', 0)  # Default to 0 if no time is provided
+
+            data.append({
+                'spot': spot_name,
+                'date': date,
+                'platform': platform,
+                'time': time_taken
+            })
+
+    df = pd.DataFrame(data)
+    return df
+
+
+def bug_reports_to_dataframe(db):
+    bug_reports_collection = db.collection('bugReports')
+    docs = bug_reports_collection.stream()
+
+    data = []
+    for doc in docs:
+        bug_data = doc.to_dict()
+        bug_type = bug_data.get('bugType', 'Unknown')  # Default to 'Unknown' if no bugType is provided
+        date = bug_data.get('date', None)  # Handle if no date is provided
+        if date:  # Assuming date is a timestamp and needs to be converted to a string
+            date = date.strftime('%Y-%m-%d %H:%M:%S')
+        description = bug_data.get('description', '')  # Default to empty string if no description is provided
+        severity_level = bug_data.get('severityLevel', 'Not specified')  # Default if no severity level is provided
+        steps_to_reproduce = bug_data.get('stepsToReproduce', '')  # Default to empty string if no steps are provided
+
+        data.append({
+            'bug_type': bug_type,
+            'date': date,
+            'description': description,
+            'severity_level': severity_level,
+            'steps_to_reproduce': steps_to_reproduce
+        })
+
+    df = pd.DataFrame(data)
+    return df
+
+
 def get_all_user_ids():
     ids = []
     users = auth.list_users()
@@ -260,6 +314,10 @@ def main():
     bookmarks_usage_data = bookmarks_usage_to_dataframe(db)
     # Get the search terms data
     search_terms_data = search_terms_to_dataframe(db)
+    #Get the spot detail fetch time
+    spot_detail_fetchtime_data = spot_detail_fetch_to_dataframe(db)
+    #Get the bug report data
+    bug_report_data = bug_reports_to_dataframe(db)
 
 
     # Create folder file path (results/timestamp of the day)
@@ -290,6 +348,8 @@ def main():
     dataframe_to_csv(spots_reviews_data, folder_path, "spots_reviews")
     dataframe_to_csv(bookmarks_usage_data, folder_path, "bookmarks_usage")
     dataframe_to_csv(search_terms_data, folder_path, "search_terms")
+    dataframe_to_csv(spot_detail_fetchtime_data, folder_path, "spots_fetch_time")
+    dataframe_to_csv(bug_report_data, folder_path, "bug_reports")
 
 
 
